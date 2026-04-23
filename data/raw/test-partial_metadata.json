@@ -1,0 +1,43 @@
+{
+  "week_key": "test-partial",
+  "pipeline_phase": "phase_1_scraping",
+  "started_at": "2026-04-22T14:40:16.832198+00:00",
+  "finished_at": "2026-04-22T14:40:16.844508+00:00",
+  "duration_seconds": 0.01,
+  "platforms_available": [
+    "google"
+  ],
+  "platforms_failed": [
+    "apple"
+  ],
+  "total_raw_reviews": 1,
+  "total_normalized_reviews": 0,
+  "normalization_stats": {
+    "total_input": 1,
+    "total_normalized": 1,
+    "duplicates_skipped": 0,
+    "no_body_skipped": 0,
+    "outside_window_skipped": 0,
+    "parse_errors": 0,
+    "language_distribution": {
+      "en": 1
+    },
+    "all_reviews_outside_window": false,
+    "cross_run_duplicates_skipped": 1
+  },
+  "platform_metadata": {
+    "apple": {
+      "status": "failed",
+      "error": "Apple scrape failed"
+    },
+    "google": {
+      "platform": "google",
+      "reviews_collected": 1
+    }
+  },
+  "output_file": "data/raw\\test-partial.jsonl",
+  "warnings": [
+    "No reviews found in window",
+    "Platforms failed: apple"
+  ]
+}

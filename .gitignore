@@ -1,0 +1,31 @@
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Pytest / Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+pytest.xml
+
+# Data and Outputs (to prevent huge files in git)
+data/raw/*.jsonl
+data/themes/*.json
+output/notes/
+output/dry_run/
+run_ledger.json
+run_ledger.json.corrupted.*
+
+# Ide
+.vscode/
+.idea/

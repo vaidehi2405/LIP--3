@@ -1,0 +1,33 @@
+{
+  "week_key": "test-empty",
+  "pipeline_phase": "phase_1_scraping",
+  "started_at": "2026-04-22T14:40:16.846617+00:00",
+  "finished_at": "2026-04-22T14:40:16.847767+00:00",
+  "duration_seconds": 0.0,
+  "platforms_available": [],
+  "platforms_failed": [],
+  "total_raw_reviews": 0,
+  "total_normalized_reviews": 0,
+  "normalization_stats": {
+    "total_input": 0,
+    "total_normalized": 0,
+    "duplicates_skipped": 0,
+    "no_body_skipped": 0,
+    "outside_window_skipped": 0,
+    "parse_errors": 0,
+    "language_distribution": {},
+    "all_reviews_outside_window": false
+  },
+  "platform_metadata": {
+    "apple": {
+      "status": "disabled"
+    },
+    "google": {
+      "status": "disabled"
+    }
+  },
+  "output_file": "data/raw\\test-empty.jsonl",
+  "warnings": [
+    "No reviews found in window"
+  ]
+}

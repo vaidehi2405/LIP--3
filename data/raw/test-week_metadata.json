@@ -1,0 +1,42 @@
+{
+  "week_key": "test-week",
+  "pipeline_phase": "phase_1_scraping",
+  "started_at": "2026-04-22T14:40:16.808833+00:00",
+  "finished_at": "2026-04-22T14:40:16.829343+00:00",
+  "duration_seconds": 0.02,
+  "platforms_available": [
+    "apple",
+    "google"
+  ],
+  "platforms_failed": [],
+  "total_raw_reviews": 2,
+  "total_normalized_reviews": 0,
+  "normalization_stats": {
+    "total_input": 2,
+    "total_normalized": 2,
+    "duplicates_skipped": 0,
+    "no_body_skipped": 0,
+    "outside_window_skipped": 0,
+    "parse_errors": 0,
+    "language_distribution": {
+      "so": 1,
+      "en": 1
+    },
+    "all_reviews_outside_window": false,
+    "cross_run_duplicates_skipped": 2
+  },
+  "platform_metadata": {
+    "apple": {
+      "platform": "apple",
+      "reviews_collected": 1
+    },
+    "google": {
+      "platform": "google",
+      "reviews_collected": 1
+    }
+  },
+  "output_file": "data/raw\\test-week.jsonl",
+  "warnings": [
+    "No reviews found in window"
+  ]
+}

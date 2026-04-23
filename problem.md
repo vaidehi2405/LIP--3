@@ -1,0 +1,13 @@
+Product and growth teams at most companies are flying blind on user sentiment. App Store and Play Store reviews come in daily, but no one has time to read hundreds of them every week. Insights get buried, the same complaints repeat for months without anyone noticing, and leadership only hears about review problems when ratings visibly drop.
+The goal of this project is to build an automated pipeline that scrapes public App Store and Play Store reviews every week, uses an LLM to find the signal in the noise, and delivers a single scannable one-page note to the team — without anyone having to manually read a single review.
+The pipeline does four things:
+First, it scrapes reviews from the last 8–12 weeks directly from Apple's public iTunes RSS feed and Google Play's public endpoints — no logins, no API keys, no scraping behind authentication walls.
+Second, it groups all collected reviews into a maximum of 5 themes using an LLM. Themes are specific to the product's features — not vague categories like "good" or "bad", but things like "KYC verification flow", "payment failure errors", or "statement download issues".
+Third, it generates a one-page weekly note containing the top 3 themes by volume, one real user quote per theme, and three action ideas — each tied to a specific screen or feature. The entire note is under 250 words, contains no PII, and is designed to be read in under two minutes.
+Fourth, it drafts and sends this note as an email to a specified recipient automatically, with a run ledger that prevents duplicate sends and a dry-run mode for testing.
+Who it serves:
+Product and growth teams use it to decide what to fix next. Support teams use it to understand what users are saying this week. Leadership uses it as a quick weekly health signal without needing to dig into dashboards.
+What makes it non-trivial:
+The hard parts are not the scraping or the email — those are solved problems. The hard parts are making the LLM produce themes that are actually specific and useful rather than generic, selecting quotes that are representative without exposing user identity, and generating action ideas that name a real feature rather than saying "improve the experience." The system also needs to handle edge cases gracefully — weeks with very few reviews, weeks where everything is positive, non-English reviews, and rate limits from both platforms — without human intervention.
+Constraints:
+Public review data only. Maximum 5 themes. Notes capped at 250 words. No usernames, emails, or device IDs in any output. Safe to re-run any week without sending duplicates. All credentials in environment variables, nothing hardcoded.
