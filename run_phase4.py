@@ -35,8 +35,8 @@ if not md_path.exists() or not html_path.exists():
 md_content = md_path.read_text(encoding="utf-8")
 html_content = html_path.read_text(encoding="utf-8")
 
-from src.notes.generator import markdown_to_arial_html
-requested_html = markdown_to_arial_html(md_content)
+from src.notes.generator import NoteGenerator
+requested_html = NoteGenerator._apply_output_formatting(md_content)
 
 print(f"Loaded note: {len(md_content)} chars (md), {len(requested_html)} chars (html)")
 print(f"Sending to: {email_cfg['to_address']}")
