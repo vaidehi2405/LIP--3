@@ -23,69 +23,36 @@ from .validator import NoteValidator
 
 logger = structlog.get_logger(__name__)
 
-def to_bold(text: str) -> str:
-    res = []
-    for c in text:
-        if 'A' <= c <= 'Z':
-            res.append(chr(ord(c) - ord('A') + 0x1D5D4))
-        elif 'a' <= c <= 'z':
-            res.append(chr(ord(c) - ord('a') + 0x1D5EE))
-        elif '0' <= c <= '9':
-            res.append(chr(ord(c) - ord('0') + 0x1D7CE))
-        else:
-            res.append(c)
-    return "".join(res)
-
-def to_italic(text: str) -> str:
-    res = []
-    for c in text:
-        if 'A' <= c <= 'Z':
-            res.append(chr(ord(c) - ord('A') + 0x1D608))
-        elif 'a' <= c <= 'z':
-            if c == 'h':
-                res.append('\u210E')
-            else:
-                res.append(chr(ord(c) - ord('a') + 0x1D622))
-        else:
-            res.append(c)
-    return "".join(res)
-
-def to_underline(text: str) -> str:
-    return "".join(c + '\u0332' for c in text)
-
-import re
-
-def markdown_to_unicode_rich_text(md_string: str) -> str:
-    """Converts markdown strictly to Unicode Bold/Italic/Underline for purely Plain-Text delivery."""
-    lines = md_string.split('\n')
-    rich_lines = []
+def markdown_to_arial_html(md_string: str) -> str:
+    """Converts markdown into clean HTML preserving Arial font, using strictly valid B, U, and I tags."""
+    import re
+    # Convert bold first
+    text = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', md_string)
+    text = re.sub(r'__(.*?)__', r'<b>\1</b>', text)
+    
+    lines = text.split('\n')
+    html_lines = []
     
     for line in lines:
-        # Pre-process bold words within lines (**text**)
-        # Using a regex to find all ** occurrences
-        while '**' in line:
-            parts = line.split('**', 2)
-            if len(parts) >= 3:
-                line = parts[0] + to_bold(parts[1]) + parts[2]
-            else:
-                line = line.replace('**', '') # unbalanced, just strip
-                
         if line.startswith("# "):
-            rich_lines.append(f"\n{to_bold(line[2:].strip())}\n")
+            title = line[2:].upper().strip()
+            html_lines.append(f"<b>{title}</b>")
+            html_lines.append("=" * len(title))
         elif line.startswith("## "):
-            rich_lines.append(f"\n{to_underline(line[3:].strip())}\n")
+            subtitle = line[3:].upper().strip()
+            html_lines.append(f"<br><br><b><u>{subtitle}</u></b><br>")
         elif line.startswith("### "):
-            # Sub-subheading -> Bold
-            rich_lines.append(f"\n{to_bold(line[4:].strip())}")
+            # Sub-headings without bold in screenshot
+            html_lines.append(f"<br>{line[4:].strip()}")
         elif line.startswith("> "):
             # Quotes -> Italics
-            rich_lines.append(f"\n    {to_italic(line[2:].strip('\"'))}")
+            html_lines.append(f"<i>{line[2:].strip()}</i>")
         elif line.startswith("---"):
-            rich_lines.append("-" * 40)
+            pass
         else:
-            rich_lines.append(line)
+            html_lines.append(line)
             
-    return '\n'.join(rich_lines).strip()
+    return '<br>\n'.join(html_lines)
 
 class NoteGenerator:
     """Uses Groq LLaMA to convert extracted themes into a weekly summary note."""

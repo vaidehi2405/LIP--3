@@ -33,7 +33,10 @@ class DeliveryClient:
         payload = {
             "to": to_email,
             "subject": subject,
-            "body": html_body
+            "body": html_body,
+            "isHtml": True,
+            "is_html": True,
+            "content_type": "text/html"
         }
 
         for attempt in range(1, 3):  # 2 attempts total
