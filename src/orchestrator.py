@@ -117,21 +117,21 @@ class PipelineOrchestrator:
         # Generate the precise Subject Title
         subject_title = "Weekly App Review Pulse"
         
-        # Create Email Draft (send beautiful plain text)
+        # Create Email Draft
         if self.to_address:
             draft_success = self.delivery_client.create_email_draft(
                 to_email=self.to_address,
                 subject=subject_title,
-                html_body=note_data["plain_text"]
+                html_body=note_data["formatted_html"]
             )
             if not draft_success:
                 logger.error("draft_creation_failed")
                 
-        # Append to Google Doc (send beautiful plain text)
+        # Append to Google Doc
         if self.doc_id:
             doc_success = self.delivery_client.append_to_doc(
                 doc_id=self.doc_id,
-                markdown_content=note_data["plain_text"]
+                markdown_content=note_data["formatted_html"]
             )
             if not doc_success:
                 logger.error("doc_append_failed")

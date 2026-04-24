@@ -23,28 +23,45 @@ from .validator import NoteValidator
 
 logger = structlog.get_logger(__name__)
 
-def markdown_to_beautiful_text(md_string: str) -> str:
-    """Removes ugly markdown symbols and formats the text cleanly for plain-text outputs."""
+def markdown_to_requested_html(md_string: str) -> str:
+    """Converts markdown to strictly use BOLD headings, UNDERLINE subheadings, and ITALICS quotes."""
     lines = md_string.split('\n')
-    clean_lines = []
+    html_lines = []
+    
     for line in lines:
-        line = line.replace("**", "")  # Remove bold asterisks
-        line = line.replace("__", "")  # Remove bold underscores
-        if line.startswith("### "):
-            clean_lines.append(f"\n{line[4:]}")
+        line = line.replace("**", "<b>").replace("__", "<b>")
+        if line.startswith("# "):
+            # Main Heading -> Bold
+            html_lines.append(f"<br><br><b>{line[2:].strip()}</b><br>")
         elif line.startswith("## "):
-            clean_lines.append(f"\n{line[3:].upper()}")
-        elif line.startswith("# "):
-            clean_lines.append(f"{line[2:].upper()}")
-            clean_lines.append("=" * len(line[2:]))
+            # Subheading -> Underline
+            html_lines.append(f"<br><br><u>{line[3:].strip()}</u><br>")
+        elif line.startswith("### "):
+            # Sub-subheading -> Bold
+            html_lines.append(f"<br><b>{line[4:].strip()}</b><br>")
         elif line.startswith("> "):
-            clean_lines.append(f"     \"{line[2:].strip('\"')}\"")
+            # Quotes -> Italics
+            html_lines.append(f"<i>\"{line[2:].strip('\"')}\"</i><br>")
         elif line.startswith("---"):
-            clean_lines.append("-" * 30)
+            html_lines.append("<hr>")
         else:
-            clean_lines.append(line)
+            # Fix dangling bold closures
+            count = line.count("<b>")
+            for _ in range(count):
+                # Simple markdown bold replace
+                line = line.replace("<b>", "</b>", 1) if "<b>" in line and html_lines else line
+            html_lines.append(f"{line}<br>")
             
-    return '\n'.join(clean_lines)
+    # Fix the bolding replacements above more robustly:
+    text = "<br>".join(html_lines)
+    
+    # We used replace("**", "<b>") but need to close them properly.
+    # Markdown to bold conversion properly:
+    # Actually, it's safer to just rebuild the bold tags using regex
+    import re
+    text = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', text)
+    
+    return text
 
 class NoteGenerator:
     """Uses Groq LLaMA to convert extracted themes into a weekly summary note."""
@@ -204,19 +221,16 @@ class NoteGenerator:
 
         # Convert to HTML (EC-3.8)
         # We do not use external stylesheets. Basic markdown conversion handles standard formatting.
-        html_content = markdown.markdown(safe_md)
-        # To strictly enforce inline CSS, we wrap the html with a simple style if needed.
-        # It's sufficient to wrap in a generic div 
+        html_content = markdown_to_requested_html(safe_md)
         html_body = f"""<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">{html_content}</div>"""
-
-        beautiful_text = markdown_to_beautiful_text(safe_md)
 
         finished_at = datetime.now(timezone.utc)
         
         return {
             "markdown": safe_md,
             "html": html_body,
-            "plain_text": beautiful_text,
+            "plain_text": safe_md,  # fallback
+            "formatted_html": html_content,
             "metadata": {
                 "word_count": len(safe_md.split()),
                 "pii_caught_in_note": pii_caught,
