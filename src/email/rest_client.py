@@ -36,15 +36,19 @@ class DeliveryClient:
             "body": html_body
         }
 
-        try:
-            logger.info("request_create_email", to=to_email)
-            response = requests.post(endpoint, json=payload, timeout=30)
-            response.raise_for_status()
-            logger.info("email_draft_created")
-            return True
-        except requests.RequestException as e:
-            logger.error("email_delivery_failed", error=str(e), response=getattr(e.response, "text", None))
-            return False
+        for attempt in range(1, 3):  # 2 attempts total
+            try:
+                logger.info("request_create_email", to=to_email, attempt=attempt)
+                response = requests.post(endpoint, json=payload, timeout=120)
+                response.raise_for_status()
+                logger.info("email_draft_created")
+                return True
+            except requests.RequestException as e:
+                logger.error("email_delivery_failed", attempt=attempt, error=str(e), response=getattr(e.response, "text", None))
+                if attempt < 2:
+                    import time
+                    time.sleep(5)
+        return False
 
     def append_to_doc(self, doc_id: str, markdown_content: str) -> bool:
         """
@@ -64,12 +68,16 @@ class DeliveryClient:
             "content": markdown_content
         }
 
-        try:
-            logger.info("request_append_doc", doc_id=doc_id)
-            response = requests.post(endpoint, json=payload, timeout=30)
-            response.raise_for_status()
-            logger.info("doc_appended")
-            return True
-        except requests.RequestException as e:
-            logger.error("doc_append_failed", error=str(e), response=getattr(e.response, "text", None))
-            return False
+        for attempt in range(1, 3):
+            try:
+                logger.info("request_append_doc", doc_id=doc_id, attempt=attempt)
+                response = requests.post(endpoint, json=payload, timeout=120)
+                response.raise_for_status()
+                logger.info("doc_appended")
+                return True
+            except requests.RequestException as e:
+                logger.error("doc_append_failed", attempt=attempt, error=str(e), response=getattr(e.response, "text", None))
+                if attempt < 2:
+                    import time
+                    time.sleep(5)
+        return False
