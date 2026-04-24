@@ -18,6 +18,8 @@ class DeliveryClient:
     def create_email_draft(self, to_email: str, subject: str, html_body: str) -> bool:
         """
         Sends a POST request to create an email draft via remote MCP server.
+        Sender ("from") account is controlled by whichever Gmail account the
+        MCP server was authorized with (credentials/token on the server side).
         """
         if not to_email or "@" not in to_email:
             logger.error("invalid_email", email=to_email)

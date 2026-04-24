@@ -7,6 +7,7 @@ Handles parsing themes, LLM prompt retries, Markdown drafting, and HTML compilat
 import os
 import json
 import time
+import re
 import markdown
 import structlog
 from datetime import datetime, timezone
@@ -71,6 +72,53 @@ class NoteGenerator:
                     raise
                 time.sleep(2)
         return ""
+
+    @staticmethod
+    def _apply_output_formatting(markdown_text: str) -> str:
+        """
+        Apply delivery formatting preferences:
+        - Main heading bold
+        - Subheadings underlined
+        - Quotes italicized and wrapped in double quotes
+        """
+        if not markdown_text:
+            return markdown_text
+
+        lines = markdown_text.splitlines()
+        formatted = []
+
+        for line in lines:
+            stripped = line.strip()
+
+            # H1 -> bold text (no markdown heading marker)
+            if stripped.startswith("# "):
+                heading = stripped[2:].strip()
+                formatted.append(f"**{heading}**")
+                continue
+
+            # H2/H3 -> underlined text (retain numbering/content)
+            if stripped.startswith("## "):
+                subheading = stripped[3:].strip()
+                formatted.append(f"<u>{subheading}</u>")
+                continue
+            if stripped.startswith("### "):
+                subheading = stripped[4:].strip()
+                formatted.append(f"<u>{subheading}</u>")
+                continue
+
+            # Quote lines from markdown blockquotes
+            if stripped.startswith(">"):
+                quote = stripped.lstrip(">").strip()
+                quote = quote.strip('"').strip("'")
+                formatted.append(f'*"{quote}"*')
+                continue
+
+            formatted.append(line)
+
+        output = "\n".join(formatted)
+        # Collapse accidental triple blank lines from replacements
+        output = re.sub(r"\n{3,}", "\n\n", output)
+        return output
 
     def process_themes(self, themes_data: dict) -> dict:
         """
@@ -179,6 +227,9 @@ class NoteGenerator:
         
         # Verify Quotes
         safe_md, quote_corrections = NoteValidator.verify_quotes(safe_md, top_themes)
+
+        # Apply user-facing formatting preferences for downstream email/doc delivery
+        safe_md = self._apply_output_formatting(safe_md)
 
         # Convert to HTML (EC-3.8)
         # We do not use external stylesheets. Basic markdown conversion handles standard formatting.
