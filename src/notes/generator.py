@@ -23,6 +23,28 @@ from .validator import NoteValidator
 
 logger = structlog.get_logger(__name__)
 
+def markdown_to_beautiful_text(md_string: str) -> str:
+    """Removes ugly markdown symbols and formats the text cleanly for plain-text outputs."""
+    lines = md_string.split('\n')
+    clean_lines = []
+    for line in lines:
+        line = line.replace("**", "")  # Remove bold asterisks
+        line = line.replace("__", "")  # Remove bold underscores
+        if line.startswith("### "):
+            clean_lines.append(f"\n{line[4:]}")
+        elif line.startswith("## "):
+            clean_lines.append(f"\n{line[3:].upper()}")
+        elif line.startswith("# "):
+            clean_lines.append(f"{line[2:].upper()}")
+            clean_lines.append("=" * len(line[2:]))
+        elif line.startswith("> "):
+            clean_lines.append(f"     \"{line[2:].strip('\"')}\"")
+        elif line.startswith("---"):
+            clean_lines.append("-" * 30)
+        else:
+            clean_lines.append(line)
+            
+    return '\n'.join(clean_lines)
 
 class NoteGenerator:
     """Uses Groq LLaMA to convert extracted themes into a weekly summary note."""
@@ -187,11 +209,14 @@ class NoteGenerator:
         # It's sufficient to wrap in a generic div 
         html_body = f"""<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">{html_content}</div>"""
 
+        beautiful_text = markdown_to_beautiful_text(safe_md)
+
         finished_at = datetime.now(timezone.utc)
         
         return {
             "markdown": safe_md,
             "html": html_body,
+            "plain_text": beautiful_text,
             "metadata": {
                 "word_count": len(safe_md.split()),
                 "pii_caught_in_note": pii_caught,

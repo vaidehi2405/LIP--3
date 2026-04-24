@@ -35,7 +35,10 @@ if not md_path.exists() or not html_path.exists():
 md_content = md_path.read_text(encoding="utf-8")
 html_content = html_path.read_text(encoding="utf-8")
 
-print(f"Loaded note: {len(md_content)} chars (md), {len(html_content)} chars (html)")
+from src.notes.generator import markdown_to_beautiful_text
+beautiful_text = markdown_to_beautiful_text(md_content)
+
+print(f"Loaded note: {len(md_content)} chars (md), {len(beautiful_text)} chars (beautiful)")
 print(f"Sending to: {email_cfg['to_address']}")
 print(f"Doc ID: {email_cfg['doc_id']}")
 print(f"Dry run: {email_cfg['dry_run']}")
@@ -43,19 +46,19 @@ print()
 
 client = DeliveryClient(dry_run=email_cfg["dry_run"])
 
-# 1. Create email draft (send markdown — MCP treats body as plain text)
+# 1. Create email draft (send beautiful plain text)
 print(">>> Creating email draft...")
 draft_ok = client.create_email_draft(
     to_email=email_cfg["to_address"],
     subject="Weekly App Review Pulse — Week 16, 2026",
-    html_body=md_content
+    html_body=beautiful_text
 )
 print(f"Draft result: {'SUCCESS' if draft_ok else 'FAILED'}")
 
-# 2. Append to Google Doc
+# 2. Append to Google Doc (send beautiful plain text)
 print("\n>>> Appending to Google Doc...")
 doc_ok = client.append_to_doc(
     doc_id=email_cfg["doc_id"],
-    markdown_content=md_content
+    markdown_content=beautiful_text
 )
 print(f"Doc append result: {'SUCCESS' if doc_ok else 'FAILED'}")
