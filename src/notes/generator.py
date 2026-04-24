@@ -23,45 +23,69 @@ from .validator import NoteValidator
 
 logger = structlog.get_logger(__name__)
 
-def markdown_to_requested_html(md_string: str) -> str:
-    """Converts markdown to strictly use BOLD headings, UNDERLINE subheadings, and ITALICS quotes."""
+def to_bold(text: str) -> str:
+    res = []
+    for c in text:
+        if 'A' <= c <= 'Z':
+            res.append(chr(ord(c) - ord('A') + 0x1D5D4))
+        elif 'a' <= c <= 'z':
+            res.append(chr(ord(c) - ord('a') + 0x1D5EE))
+        elif '0' <= c <= '9':
+            res.append(chr(ord(c) - ord('0') + 0x1D7CE))
+        else:
+            res.append(c)
+    return "".join(res)
+
+def to_italic(text: str) -> str:
+    res = []
+    for c in text:
+        if 'A' <= c <= 'Z':
+            res.append(chr(ord(c) - ord('A') + 0x1D608))
+        elif 'a' <= c <= 'z':
+            if c == 'h':
+                res.append('\u210E')
+            else:
+                res.append(chr(ord(c) - ord('a') + 0x1D622))
+        else:
+            res.append(c)
+    return "".join(res)
+
+def to_underline(text: str) -> str:
+    return "".join(c + '\u0332' for c in text)
+
+import re
+
+def markdown_to_unicode_rich_text(md_string: str) -> str:
+    """Converts markdown strictly to Unicode Bold/Italic/Underline for purely Plain-Text delivery."""
     lines = md_string.split('\n')
-    html_lines = []
+    rich_lines = []
     
     for line in lines:
-        line = line.replace("**", "<b>").replace("__", "<b>")
+        # Pre-process bold words within lines (**text**)
+        # Using a regex to find all ** occurrences
+        while '**' in line:
+            parts = line.split('**', 2)
+            if len(parts) >= 3:
+                line = parts[0] + to_bold(parts[1]) + parts[2]
+            else:
+                line = line.replace('**', '') # unbalanced, just strip
+                
         if line.startswith("# "):
-            # Main Heading -> Bold
-            html_lines.append(f"<br><br><b>{line[2:].strip()}</b><br>")
+            rich_lines.append(f"\n{to_bold(line[2:].strip())}\n")
         elif line.startswith("## "):
-            # Subheading -> Underline
-            html_lines.append(f"<br><br><u>{line[3:].strip()}</u><br>")
+            rich_lines.append(f"\n{to_underline(line[3:].strip())}\n")
         elif line.startswith("### "):
             # Sub-subheading -> Bold
-            html_lines.append(f"<br><b>{line[4:].strip()}</b><br>")
+            rich_lines.append(f"\n{to_bold(line[4:].strip())}")
         elif line.startswith("> "):
             # Quotes -> Italics
-            html_lines.append(f"<i>\"{line[2:].strip('\"')}\"</i><br>")
+            rich_lines.append(f"\n    {to_italic(line[2:].strip('\"'))}")
         elif line.startswith("---"):
-            html_lines.append("<hr>")
+            rich_lines.append("-" * 40)
         else:
-            # Fix dangling bold closures
-            count = line.count("<b>")
-            for _ in range(count):
-                # Simple markdown bold replace
-                line = line.replace("<b>", "</b>", 1) if "<b>" in line and html_lines else line
-            html_lines.append(f"{line}<br>")
+            rich_lines.append(line)
             
-    # Fix the bolding replacements above more robustly:
-    text = "<br>".join(html_lines)
-    
-    # We used replace("**", "<b>") but need to close them properly.
-    # Markdown to bold conversion properly:
-    # Actually, it's safer to just rebuild the bold tags using regex
-    import re
-    text = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', text)
-    
-    return text
+    return '\n'.join(rich_lines).strip()
 
 class NoteGenerator:
     """Uses Groq LLaMA to convert extracted themes into a weekly summary note."""
@@ -219,18 +243,17 @@ class NoteGenerator:
         # Verify Quotes
         safe_md, quote_corrections = NoteValidator.verify_quotes(safe_md, top_themes)
 
-        # Convert to HTML (EC-3.8)
-        # We do not use external stylesheets. Basic markdown conversion handles standard formatting.
-        html_content = markdown_to_requested_html(safe_md)
-        html_body = f"""<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">{html_content}</div>"""
+        unicode_content = markdown_to_unicode_rich_text(safe_md)
+        # Using simple HTML wrapper for anything else, but the endpoint takes plain text, so fallback to safe_md
+        html_body = f"""<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">{safe_md}</div>"""
 
         finished_at = datetime.now(timezone.utc)
         
         return {
             "markdown": safe_md,
             "html": html_body,
-            "plain_text": safe_md,  # fallback
-            "formatted_html": html_content,
+            "plain_text": safe_md,
+            "formatted_html": unicode_content,  # using the same key so we don't have to change orchestrator
             "metadata": {
                 "word_count": len(safe_md.split()),
                 "pii_caught_in_note": pii_caught,
