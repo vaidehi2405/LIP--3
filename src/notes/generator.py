@@ -24,6 +24,36 @@ from .validator import NoteValidator
 
 logger = structlog.get_logger(__name__)
 
+def markdown_to_arial_html(md_string: str) -> str:
+    """Converts markdown into clean HTML preserving Arial font, using strictly valid B, U, and I tags."""
+    import re
+    # Convert bold first
+    text = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', md_string)
+    text = re.sub(r'__(.*?)__', r'<b>\1</b>', text)
+    
+    lines = text.split('\n')
+    html_lines = []
+    
+    for line in lines:
+        if line.startswith("# "):
+            title = line[2:].upper().strip()
+            html_lines.append(f"<b>{title}</b>")
+            html_lines.append("=" * len(title))
+        elif line.startswith("## "):
+            subtitle = line[3:].upper().strip()
+            html_lines.append(f"<br><br><b><u>{subtitle}</u></b><br>")
+        elif line.startswith("### "):
+            # Sub-headings without bold in screenshot
+            html_lines.append(f"<br>{line[4:].strip()}")
+        elif line.startswith("> "):
+            # Quotes -> Italics
+            html_lines.append(f"<i>{line[2:].strip()}</i>")
+        elif line.startswith("---"):
+            pass
+        else:
+            html_lines.append(line)
+            
+    return '<br>\n'.join(html_lines)
 
 class NoteGenerator:
     """Uses Groq LLaMA to convert extracted themes into a weekly summary note."""
@@ -228,21 +258,17 @@ class NoteGenerator:
         # Verify Quotes
         safe_md, quote_corrections = NoteValidator.verify_quotes(safe_md, top_themes)
 
-        # Apply user-facing formatting preferences for downstream email/doc delivery
-        safe_md = self._apply_output_formatting(safe_md)
-
-        # Convert to HTML (EC-3.8)
-        # We do not use external stylesheets. Basic markdown conversion handles standard formatting.
-        html_content = markdown.markdown(safe_md)
-        # To strictly enforce inline CSS, we wrap the html with a simple style if needed.
-        # It's sufficient to wrap in a generic div 
-        html_body = f"""<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">{html_content}</div>"""
+        unicode_content = markdown_to_unicode_rich_text(safe_md)
+        # Using simple HTML wrapper for anything else, but the endpoint takes plain text, so fallback to safe_md
+        html_body = f"""<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">{safe_md}</div>"""
 
         finished_at = datetime.now(timezone.utc)
         
         return {
             "markdown": safe_md,
             "html": html_body,
+            "plain_text": safe_md,
+            "formatted_html": unicode_content,  # using the same key so we don't have to change orchestrator
             "metadata": {
                 "word_count": len(safe_md.split()),
                 "pii_caught_in_note": pii_caught,

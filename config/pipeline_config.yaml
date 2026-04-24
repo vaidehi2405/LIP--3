@@ -34,8 +34,8 @@ llm:
   max_retries: 3
 
 email:
-  dry_run: true              # set to false to actually send emails/append doc
+  dry_run: false              # set to false to actually send emails/append doc
   to_address: "saurabhdeosarkar101@gmail.com"     # TARGET 1: recipient Gmail address for draft creation
-  doc_id: "your-google-doc-id-here"          # TARGET 2: Google Doc ID to append weekly note
+  doc_id: "1cN87QOCrQfFcAmZvj0dzvM_eoPFFCxVKDloS2UVphSY"          # TARGET 2: Google Doc ID to append weekly note
   # FROM email is NOT set here. It comes from the Gmail account authorized on the MCP server
   # via credentials.json + token.json during server setup/deployment.
