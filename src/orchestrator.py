@@ -113,12 +113,12 @@ class PipelineOrchestrator:
         # Generate the precise Subject Title
         subject_title = "Weekly App Review Pulse"
         
-        # Create Email Draft
+        # Create Email Draft (send markdown — MCP server treats body as plain text)
         if self.to_address:
             draft_success = self.delivery_client.create_email_draft(
                 to_email=self.to_address,
                 subject=subject_title,
-                html_body=note_data["html"]
+                html_body=note_data["markdown"]
             )
             if not draft_success:
                 logger.error("draft_creation_failed")

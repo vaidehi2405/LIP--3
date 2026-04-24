@@ -43,12 +43,12 @@ print()
 
 client = DeliveryClient(dry_run=email_cfg["dry_run"])
 
-# 1. Create email draft
+# 1. Create email draft (send markdown — MCP treats body as plain text)
 print(">>> Creating email draft...")
 draft_ok = client.create_email_draft(
     to_email=email_cfg["to_address"],
     subject="Weekly App Review Pulse — Week 16, 2026",
-    html_body=html_content
+    html_body=md_content
 )
 print(f"Draft result: {'SUCCESS' if draft_ok else 'FAILED'}")
 

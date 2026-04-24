@@ -41,7 +41,7 @@ class DeliveryClient:
                 logger.info("request_create_email", to=to_email, attempt=attempt)
                 response = requests.post(endpoint, json=payload, timeout=120)
                 response.raise_for_status()
-                logger.info("email_draft_created")
+                logger.info("email_draft_created", server_response=response.text[:200])
                 return True
             except requests.RequestException as e:
                 logger.error("email_delivery_failed", attempt=attempt, error=str(e), response=getattr(e.response, "text", None))
@@ -73,7 +73,15 @@ class DeliveryClient:
                 logger.info("request_append_doc", doc_id=doc_id, attempt=attempt)
                 response = requests.post(endpoint, json=payload, timeout=120)
                 response.raise_for_status()
-                logger.info("doc_appended")
+                resp_data = response.json() if response.text else {}
+                logger.info("doc_appended", server_response=response.text[:300])
+                if resp_data.get("status") == "error":
+                    logger.error("doc_server_error", details=resp_data.get("details", ""))
+                    if attempt < 2:
+                        import time
+                        time.sleep(5)
+                        continue
+                    return False
                 return True
             except requests.RequestException as e:
                 logger.error("doc_append_failed", attempt=attempt, error=str(e), response=getattr(e.response, "text", None))
