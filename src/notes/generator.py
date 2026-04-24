@@ -104,49 +104,52 @@ class NoteGenerator:
         return ""
 
     @staticmethod
-    def _apply_output_formatting(markdown_text: str) -> str:
+    def _apply_output_formatting(md_string: str) -> str:
         """
-        Apply delivery formatting preferences:
-        - Main heading bold
-        - Subheadings underlined
-        - Quotes italicized and wrapped in double quotes
+        Bypasses plain-text constraints by mapping characters to Unicode Mathematical Sans-Serif glyphs.
+        This provides a 'faux' rich text appearance (bold, italic, underline) without using HTML/Markdown tags.
         """
-        if not markdown_text:
-            return markdown_text
+        def to_bold(text: str) -> str:
+            res = []
+            for c in text:
+                if 'A' <= c <= 'Z': res.append(chr(ord(c) - ord('A') + 0x1D5D4))
+                elif 'a' <= c <= 'z': res.append(chr(ord(c) - ord('a') + 0x1D5EE))
+                elif '0' <= c <= '9': res.append(chr(ord(c) - ord('0') + 0x1D7CE))
+                else: res.append(c)
+            return "".join(res)
 
-        lines = markdown_text.splitlines()
-        formatted = []
+        def to_italic(text: str) -> str:
+            res = []
+            for c in text:
+                if 'A' <= c <= 'Z': res.append(chr(ord(c) - ord('A') + 0x1D608))
+                elif 'a' <= c <= 'z': res.append('\u210E' if c == 'h' else chr(ord(c) - ord('a') + 0x1D622))
+                else: res.append(c)
+            return "".join(res)
 
+        def to_underline(text: str) -> str:
+            return "".join(c + '\u0332' for c in text)
+
+        lines = md_string.split('\n')
+        rich_lines = []
+        
         for line in lines:
-            stripped = line.strip()
-
-            # H1 -> bold text (no markdown heading marker)
-            if stripped.startswith("# "):
-                heading = stripped[2:].strip()
-                formatted.append(f"**{heading}**")
-                continue
-
-            # H2/H3 -> underlined text (retain numbering/content)
-            if stripped.startswith("## "):
-                subheading = stripped[3:].strip()
-                formatted.append(f"<u>{subheading}</u>")
-                continue
-            if stripped.startswith("### "):
-                subheading = stripped[4:].strip()
-                formatted.append(f"<u>{subheading}</u>")
-                continue
-
-            # Quote lines from markdown blockquotes
-            if stripped.startswith(">"):
-                quote = stripped.lstrip(">").strip()
-                quote = quote.strip('"').strip("'")
-                formatted.append(f'*"{quote}"*')
-                continue
-
-            formatted.append(line)
-
-        output = "\n".join(formatted)
-        # Collapse accidental triple blank lines from replacements
+            while '**' in line:
+                parts = line.split('**', 2)
+                if len(parts) >= 3:
+                    line = parts[0] + to_bold(parts[1]) + parts[2]
+                else:
+                    line = line.replace('**', '') 
+                    
+            if line.startswith("# "): rich_lines.append(f"\n{to_bold(line[2:].strip())}\n")
+            elif line.startswith("## "): rich_lines.append(f"\n{to_underline(line[3:].strip())}\n")
+            elif line.startswith("### "): rich_lines.append(f"\n{to_underline(line[4:].strip())}")
+            elif line.startswith("> "): rich_lines.append(f"\n    {to_italic(line[2:].strip('\"'))}")
+            elif line.startswith("---"): rich_lines.append("-" * 40)
+            else: rich_lines.append(line)
+                
+        # Collapse accidental triple blank lines
+        import re
+        output = '\n'.join(rich_lines).strip()
         output = re.sub(r"\n{3,}", "\n\n", output)
         return output
 
@@ -258,8 +261,7 @@ class NoteGenerator:
         # Verify Quotes
         safe_md, quote_corrections = NoteValidator.verify_quotes(safe_md, top_themes)
 
-        unicode_content = markdown_to_unicode_rich_text(safe_md)
-        # Using simple HTML wrapper for anything else, but the endpoint takes plain text, so fallback to safe_md
+        formatted_text = self._apply_output_formatting(safe_md)
         html_body = f"""<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">{safe_md}</div>"""
 
         finished_at = datetime.now(timezone.utc)
@@ -268,7 +270,7 @@ class NoteGenerator:
             "markdown": safe_md,
             "html": html_body,
             "plain_text": safe_md,
-            "formatted_html": unicode_content,  # using the same key so we don't have to change orchestrator
+            "formatted_html": formatted_text,  # using the same key so we don't have to change orchestrator
             "metadata": {
                 "word_count": len(safe_md.split()),
                 "pii_caught_in_note": pii_caught,
