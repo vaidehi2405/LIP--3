@@ -4,8 +4,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv()
 
-from src.email.rest_client import DeliveryClient
-from src.email.ledger import RunLedger
+from src.delivery.rest_client import DeliveryClient
+from src.delivery.ledger import RunLedger
 
 structlog.configure(
     processors=[

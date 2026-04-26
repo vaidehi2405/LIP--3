@@ -13,8 +13,8 @@ from pathlib import Path
 from src.scraper.orchestrator import ScraperOrchestrator
 from src.themes.extractor import ThemeExtractor
 from src.notes.generator import NoteGenerator
-from src.email.rest_client import DeliveryClient
-from src.email.ledger import RunLedger
+from src.delivery.rest_client import DeliveryClient
+from src.delivery.ledger import RunLedger
 
 logger = structlog.get_logger(__name__)
 
