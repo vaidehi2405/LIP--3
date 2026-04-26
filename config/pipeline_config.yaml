@@ -8,20 +8,20 @@ scraper:
     # Example: https://apps.apple.com/us/app/example/id123456789 → app_id: "123456789"
     app_id: 1404871703
     country: "in"
-    rss_limit: 500           # max reviews per RSS fetch (Apple caps at 500)
+    rss_limit: 15000           # max reviews per RSS fetch (Apple caps at 500 per page, but scraper handles multiple)
 
   google:
     # SOURCE APP 2: Google Play package name
     # Example: https://play.google.com/store/apps/details?id=com.example.app
     app_id: "com.nextbillion.groww"
     language: "en"
-    count: 500               # max reviews to fetch
+    count: 15000               # max reviews to fetch
 
   lookback_weeks: 12         # fetch reviews from last N weeks
   min_lookback_weeks: 8      # minimum window (for validation)
 
   rate_limit:
-    requests_per_minute: 10
+    requests_per_minute: 60
     retry_max: 3
     retry_backoff_seconds: 5
 

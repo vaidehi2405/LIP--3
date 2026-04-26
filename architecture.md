@@ -96,11 +96,11 @@ scraper:
   apple:
     app_id: "com.example.app"
     country: "us"
-    rss_limit: 500           # max per RSS fetch
+    rss_limit: 15000           # max per RSS fetch
   google:
     app_id: "com.example.app"
     language: "en"
-    count: 500
+    count: 15000
   lookback_weeks: 12
   min_lookback_weeks: 8
   rate_limit:

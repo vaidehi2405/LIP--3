@@ -244,25 +244,40 @@ class ScraperOrchestrator:
         normalized_reviews = norm_result["reviews"]
         norm_stats = norm_result["stats"]
 
-        # --- Dedup against existing data ---
+        # --- Dedup and Merge ---
         output_filepath = os.path.join(output_dir, f"{week_key}.jsonl")
-        existing_ids = self._load_existing_review_ids(output_filepath)
-        if existing_ids:
-            before_dedup = len(normalized_reviews)
-            normalized_reviews = [
-                r for r in normalized_reviews if r["review_id"] not in existing_ids
-            ]
-            cross_run_dedup = before_dedup - len(normalized_reviews)
-            logger.info(
-                "cross_run_dedup",
-                existing_ids=len(existing_ids),
-                new_reviews=len(normalized_reviews),
-                duplicates_removed=cross_run_dedup,
-            )
-            norm_stats["cross_run_duplicates_skipped"] = cross_run_dedup
+        
+        # Load existing reviews to merge
+        existing_reviews = []
+        if os.path.exists(output_filepath):
+            try:
+                with open(output_filepath, "r", encoding="utf-8") as f:
+                    for line in f:
+                        if line.strip():
+                            existing_reviews.append(json.loads(line))
+            except Exception as e:
+                logger.warning("failed_to_load_existing_for_merge", error=str(e))
+        
+        existing_ids = {r["review_id"] for r in existing_reviews if "review_id" in r}
+        
+        # Filter new reviews
+        new_reviews = [r for r in normalized_reviews if r["review_id"] not in existing_ids]
+        cross_run_dedup = len(normalized_reviews) - len(new_reviews)
+        
+        # All reviews to save
+        all_final_reviews = existing_reviews + new_reviews
+        
+        logger.info(
+            "cross_run_dedup",
+            existing=len(existing_reviews),
+            incoming=len(normalized_reviews),
+            new=len(new_reviews),
+            duplicates_removed=cross_run_dedup,
+        )
+        norm_stats["cross_run_duplicates_skipped"] = cross_run_dedup
 
         # --- Save output ---
-        self._save_jsonl(normalized_reviews, output_filepath)
+        self._save_jsonl(all_final_reviews, output_filepath)
 
         metadata_filepath = os.path.join(output_dir, f"{week_key}_metadata.json")
         finished_at = datetime.now(timezone.utc)
@@ -278,7 +293,7 @@ class ScraperOrchestrator:
             "platforms_available": platforms_available,
             "platforms_failed": platforms_failed,
             "total_raw_reviews": len(all_raw_reviews),
-            "total_normalized_reviews": len(normalized_reviews),
+            "total_normalized_reviews": len(all_final_reviews),
             "normalization_stats": norm_stats,
             "platform_metadata": platform_metadata,
             "output_file": output_filepath,
@@ -286,7 +301,7 @@ class ScraperOrchestrator:
 
         # Add warnings
         warnings = []
-        if not normalized_reviews:
+        if not all_final_reviews:
             warnings.append("No reviews found in window")
         if platforms_failed:
             warnings.append(
@@ -303,13 +318,14 @@ class ScraperOrchestrator:
         logger.info(
             "scraper_orchestrator_complete",
             week_key=week_key,
-            total_reviews=len(normalized_reviews),
+            total_reviews=len(all_final_reviews),
+            new_reviews=len(new_reviews),
             platforms=platforms_available,
             warnings=warnings if warnings else None,
         )
 
         return {
-            "reviews": normalized_reviews,
+            "reviews": all_final_reviews,
             "metadata": combined_metadata,
             "filepath": output_filepath,
         }

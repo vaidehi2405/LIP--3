@@ -13,39 +13,49 @@ body,
 body {
   margin: 0;
   font-family: Roboto, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  background-color: #F4F6F8;
+  color: #111827;
 }
 
 :root {
-  --md3-primary: 99 91 255;
+  /* Groww Green Primary */
+  --md3-primary: 0 179 134;
   --md3-on-primary: 255 255 255;
-  --md3-primary-container: 233 221 255;
-  --md3-on-primary-container: 33 0 93;
+  --md3-primary-container: 204 250 236;
+  --md3-on-primary-container: 0 68 51;
 
-  --md3-secondary-container: 232 222 248;
-  --md3-on-secondary-container: 29 25 43;
+  --md3-secondary-container: 241 245 249;
+  --md3-on-secondary-container: 30 41 59;
 
-  --md3-surface: 255 251 254;
-  --md3-surface-container: 244 237 247;
-  --md3-surface-container-high: 236 230 240;
-  --md3-on-surface: 29 27 32;
-  --md3-outline: 121 116 126;
+  --md3-surface: 255 255 255;
+  --md3-surface-container: 248 250 252;
+  --md3-surface-container-high: 241 245 249;
+  --md3-on-surface: 15 23 42;
+  --md3-outline: 203 213 225;
 
-  --md3-error: 186 26 26;
-  --md3-success: 43 119 71;
+  --md3-error: 239 68 68;
+  --md3-success: 16 185 129;
 }
 
-.dark {
-  --md3-primary: 207 189 255;
-  --md3-on-primary: 55 30 115;
-  --md3-primary-container: 79 55 139;
-  --md3-on-primary-container: 233 221 255;
+/* Base card styling to match Figma */
+@layer components {
+  .figma-card {
+    @apply bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-slate-100;
+  }
+}
 
-  --md3-secondary-container: 74 68 88;
-  --md3-on-secondary-container: 232 222 248;
-
-  --md3-surface: 20 18 24;
-  --md3-surface-container: 33 31 38;
-  --md3-surface-container-high: 43 41 49;
-  --md3-on-surface: 231 224 236;
-  --md3-outline: 147 143 153;
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(var(--md3-outline), 0.5);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--md3-outline), 0.8);
 }

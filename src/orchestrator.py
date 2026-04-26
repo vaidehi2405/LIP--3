@@ -13,8 +13,8 @@ from pathlib import Path
 from src.scraper.orchestrator import ScraperOrchestrator
 from src.themes.extractor import ThemeExtractor
 from src.notes.generator import NoteGenerator
-from src.email.rest_client import DeliveryClient
-from src.email.ledger import RunLedger
+from src.delivery.rest_client import DeliveryClient
+from src.delivery.ledger import RunLedger
 
 logger = structlog.get_logger(__name__)
 
@@ -27,74 +27,45 @@ class PipelineOrchestrator:
         
         # Delivery Config
         email_config = self.config.get("email", {})
-        self.dry_run = email_config.get("dry_run", True)
         self.to_address = email_config.get("to_address")
         self.doc_id = email_config.get("doc_id")
-
-        self.ledger = RunLedger()
+        self.dry_run = email_config.get("dry_run", True)
+        
+        # Clients
         self.delivery_client = DeliveryClient(dry_run=self.dry_run)
+        self.ledger = RunLedger()
 
     def run_full_pipeline(self):
-        """Execute all 4 pipeline phases sequentially."""
-        logger.info("pipeline_started", week_key=self.week_key, dry_run=self.dry_run)
+        logger.info("pipeline_started", week_key=self.week_key)
         
-        # Check idempotency first (if not dry run)
-        if not self.dry_run and not self.ledger.should_send(self.week_key):
-            logger.info("pipeline_skip", reason="Already sent this week", week_key=self.week_key)
-            return
-
         # ==========================================
-        # Phase 1: Data Scraping
+        # Phase 1: Scrape
         # ==========================================
         logger.info("phase_1_started")
-        scraper = ScraperOrchestrator(self.config.get("scraper", {}))
-        scrape_result = scraper.run(output_dir="data/raw", week_key=self.week_key)
-        reviews = scrape_result.get("reviews", [])
+        scraper = ScraperOrchestrator(self.config["scraper"])
+        scrape_result = scraper.run(week_key=self.week_key)
+        reviews = scrape_result["reviews"]
         
         if not reviews:
-            logger.warning("pipeline_abort", reason="No reviews scraped")
-            self.ledger.record_run(self.week_key, "failed", "No reviews scraped")
+            logger.error("no_reviews_collected")
             return
 
         # ==========================================
         # Phase 2: Theme Extraction
         # ==========================================
-        logger.info("phase_2_started", raw_reviews_count=len(reviews))
-        theme_extractor = ThemeExtractor(config_path="config/pipeline_config.yaml")
-        themes_data = theme_extractor.extract_themes(reviews)
+        logger.info("phase_2_started")
+        extractor = ThemeExtractor("config/pipeline_config.yaml")
+        themes_result = extractor.extract_themes(reviews)
         
-        # Inject metadata from phase 1
-        themes_data["metadata"] = scrape_result.get("metadata", {})
-        
-        # Save themes explicitly
-        themes_dir = Path("data/themes")
-        themes_dir.mkdir(parents=True, exist_ok=True)
-        themes_filepath = themes_dir / f"{self.week_key}.json"
-        with open(themes_filepath, "w", encoding="utf-8") as f:
-            json.dump(themes_data, f, indent=2, ensure_ascii=False)
-
-        if not themes_data.get("themes"):
-            logger.warning("pipeline_abort", reason="No themes generated")
-            self.ledger.record_run(self.week_key, "failed", "No themes generated")
-            return
-
         # ==========================================
         # Phase 3: Note Generation
         # ==========================================
-        logger.info("phase_3_started", themes_count=len(themes_data["themes"]))
-        note_generator = NoteGenerator(config_path="config/pipeline_config.yaml")
-        note_data = note_generator.process_themes(themes_data)
+        logger.info("phase_3_started")
+        generator = NoteGenerator()
+        note_data = generator.process_themes(themes_result)
         
-        if not note_data:
-            logger.warning("pipeline_abort", reason="Note generator failed")
-            self.ledger.record_run(self.week_key, "failed", "Note generation failed")
-            return
-
-        # Save note outputs
+        # Save output
         output_dir = Path("output/notes") / self.week_key
-        if self.dry_run:
-            output_dir = Path("output/dry_run") / self.week_key
-            
         output_dir.mkdir(parents=True, exist_ok=True)
         
         md_path = output_dir / "weekly_note.md"
@@ -105,17 +76,13 @@ class PipelineOrchestrator:
         with open(html_path, "w", encoding="utf-8") as f:
             f.write(note_data["html"])
             
-        txt_path = output_dir / "weekly_note_beautiful.txt"
-        with open(txt_path, "w", encoding="utf-8") as f:
-            f.write(note_data["plain_text"])
-
         # ==========================================
         # Phase 4: Delivery
         # ==========================================
         logger.info("phase_4_started")
         
         # Generate the precise Subject Title
-        subject_title = "Weekly App Review Pulse"
+        subject_title = f"Weekly App Review Pulse - {self.week_key}"
         
         # Create Email Draft
         if self.to_address:
@@ -124,7 +91,9 @@ class PipelineOrchestrator:
                 subject=subject_title,
                 html_body=note_data["formatted_html"]
             )
-            if not draft_success:
+            if draft_success:
+                logger.info("draft_created_successfully", to=self.to_address)
+            else:
                 logger.error("draft_creation_failed")
                 
         # Append to Google Doc
