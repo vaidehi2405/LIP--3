@@ -18,6 +18,8 @@ import {
   Search,
   Share2,
   Smartphone,
+  Apple,
+  Play,
   Star,
   Sun,
   ThumbsUp,
@@ -650,7 +652,7 @@ export default function AppReviewDashboard() {
 
   // Pagination State
   const [currentPage, setCurrentPage] = React.useState(1);
-  const pageSize = 20;
+  const pageSize = 10;
 
 
   const handleSendEmail = async () => {
@@ -749,11 +751,11 @@ export default function AppReviewDashboard() {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#00B386] font-bold text-white text-lg">
                 G
               </div>
-              <span className="text-lg font-semibold text-slate-800">Internal Tool</span>
+
               <div className="h-6 w-px bg-slate-200 mx-2" />
               <div className="flex items-center gap-2">
                 <Activity className="h-5 w-5 text-[#00B386]" />
-                <span className="text-lg font-semibold text-slate-800">Review Pulse</span>
+                <span className="text-lg font-semibold text-slate-800">Playstore & Appstore Pulse</span>
               </div>
               <Badge className="ml-2 rounded-full border-none bg-emerald-50 text-[#00B386] px-3 py-1 text-xs font-semibold hover:bg-emerald-100">
                 AI Generated Insights
@@ -761,15 +763,9 @@ export default function AppReviewDashboard() {
             </div>
 
             <div className="flex items-center gap-5">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <Input
-                  className="h-9 w-[300px] rounded-full border border-slate-200 bg-slate-50 pl-9 text-sm focus-visible:ring-1 focus-visible:ring-[#00B386]"
-                  placeholder="Search themes, actions, reviews..."
-                />
-              </div>
+
               <Select defaultValue="7d">
-                <SelectTrigger className="h-9 w-[130px] rounded-full border border-slate-200 bg-slate-50 text-sm focus:ring-1 focus:ring-[#00B386]">
+                <SelectTrigger className="h-9 w-[150px] rounded-full border border-slate-200 bg-slate-50 text-sm focus:ring-1 focus:ring-[#00B386]">
                   <div className="flex items-center gap-2">
                     <Clock3 className="h-4 w-4 text-slate-500" />
                     <span>Last 7 days</span>
@@ -781,12 +777,9 @@ export default function AppReviewDashboard() {
                   <SelectItem value="90d">Last 90 days</SelectItem>
                 </SelectContent>
               </Select>
-              <div className="relative cursor-pointer">
-                <Bell className="h-5 w-5 text-slate-500 hover:text-slate-800" />
-                <span className="absolute 0 top-0 right-0 h-2 w-2 rounded-full border-2 border-white bg-rose-500" />
-              </div>
+
               <Avatar className="h-8 w-8 bg-indigo-100 text-indigo-700 font-semibold text-sm">
-                <AvatarFallback className="bg-indigo-100 text-indigo-700">SD</AvatarFallback>
+                <AvatarFallback className="bg-indigo-100 text-indigo-700">VP</AvatarFallback>
               </Avatar>
             </div>
           </header>
@@ -815,13 +808,6 @@ export default function AppReviewDashboard() {
                     <span>
                       {summary ? `${summary.reviewsAnalyzed} reviews analyzed from App Store + Play Store` : "Loading summary..."}
                     </span>
-                    <span className="text-slate-300">•</span>
-                    {summary && (
-                      <span className="flex items-center font-semibold text-[#00B386]">
-                        <CheckCircle2 className="mr-1 h-4 w-4" />
-                        {summary.pipelineStatus}
-                      </span>
-                    )}
                     <span className="text-slate-300">•</span>
                     {summary && (
                       <span>Last updated: {summary.lastUpdated}</span>
@@ -854,7 +840,7 @@ export default function AppReviewDashboard() {
               </div>
             </section>
 
-            <section className="mb-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+            <section className="mb-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
               {isLoading ? (
                 <>
                   <SkeletonCard />
@@ -913,23 +899,7 @@ export default function AppReviewDashboard() {
                     </div>
                   </Card>
 
-                  <Card className="rounded-2xl border border-slate-200/50 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col justify-between p-5 h-[130px] bg-white">
-                    <div className="flex justify-between items-start">
-                      <h3 className="text-[15px] font-medium text-slate-600">Critical Issues Detected</h3>
-                      <div className="grid h-9 w-9 place-items-center rounded-xl bg-[#FEF2F2]">
-                        <AlertCircle className="h-4 w-4 text-[#EF4444]" />
-                      </div>
-                    </div>
-                    <div className="mt-2">
-                      <div className="flex items-end gap-2">
-                        <span className="text-[32px] font-bold text-slate-900 leading-none">{summary?.criticalIssues}</span>
-                        <Badge className="h-5 px-1.5 mb-1 rounded text-[11px] bg-[#FEF2F2] text-[#DC2626] border-none hover:bg-[#FEF2F2] font-semibold">+1</Badge>
-                      </div>
-                      <div className="mt-1.5 text-xs text-slate-500">
-                        Action required
-                      </div>
-                    </div>
-                  </Card>
+
                 </>
               )}
             </section>
@@ -974,12 +944,12 @@ export default function AppReviewDashboard() {
                           </div>
                           <div className="flex items-center gap-3 text-slate-400 text-xs font-medium border border-slate-200 rounded-lg px-3 py-1.5 bg-white shadow-sm">
                             <div className="flex items-center gap-1.5 text-slate-700">
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" /></svg>
+                              <Play className="h-3.5 w-3.5" />
                               {theme.platformSplit.android}
                             </div>
                             <div className="w-px h-3 bg-slate-200" />
                             <div className="flex items-center gap-1.5 text-slate-700">
-                              <Smartphone className="h-3.5 w-3.5" />
+                              <Apple className="h-3.5 w-3.5" />
                               {theme.platformSplit.apple}
                             </div>
                           </div>
