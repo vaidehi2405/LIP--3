@@ -1,0 +1,51 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: Roboto, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+:root {
+  --md3-primary: 99 91 255;
+  --md3-on-primary: 255 255 255;
+  --md3-primary-container: 233 221 255;
+  --md3-on-primary-container: 33 0 93;
+
+  --md3-secondary-container: 232 222 248;
+  --md3-on-secondary-container: 29 25 43;
+
+  --md3-surface: 255 251 254;
+  --md3-surface-container: 244 237 247;
+  --md3-surface-container-high: 236 230 240;
+  --md3-on-surface: 29 27 32;
+  --md3-outline: 121 116 126;
+
+  --md3-error: 186 26 26;
+  --md3-success: 43 119 71;
+}
+
+.dark {
+  --md3-primary: 207 189 255;
+  --md3-on-primary: 55 30 115;
+  --md3-primary-container: 79 55 139;
+  --md3-on-primary-container: 233 221 255;
+
+  --md3-secondary-container: 74 68 88;
+  --md3-on-secondary-container: 232 222 248;
+
+  --md3-surface: 20 18 24;
+  --md3-surface-container: 33 31 38;
+  --md3-surface-container-high: 43 41 49;
+  --md3-on-surface: 231 224 236;
+  --md3-outline: 147 143 153;
+}
